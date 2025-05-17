@@ -227,8 +227,84 @@ HUGGINGFACE_API_KEY=your_huggingface_key
    - [Together AI](https://www.together.ai/)
    - [Google AI (Gemini)](https://ai.google.dev/)
    - [HuggingFace](https://huggingface.co/inference-api)
-   - Or use Ollama for local inference (no key required)
+   - **Ollama:** No API key required, but the Ollama server must be running locally (see below)
+
+### Provider Prerequisites Summary
+
+| Provider      | API Key Required | Prerequisite                |
+|---------------|------------------|-----------------------------|
+| OpenAI        | Yes              | None                        |
+| Together AI   | Yes              | None                        |
+| Google Gemini | Yes              | None                        |
+| HuggingFace   | Yes              | None                        |
+| Ollama        | No               | Ollama server running local |
+
+## Using Ollama as a Local LLM Provider
+
+If you want to use the `ollama` provider for local inference (no API key required), you must have the Ollama server running on your machine before running this application.
+
+**Steps:**
+
+1. **Install Ollama**  
+   Download and install Ollama from [https://ollama.com/download](https://ollama.com/download) and follow the instructions for your operating system.
+
+2. **Start the Ollama server**  
+   Open a terminal and run:
+   ```
+   ollama serve
+   ```
+   This will start the Ollama server on `localhost:11434` (the default).
+
+3. **(Optional) Pull a model**  
+   If you want to use a specific model (e.g., Llama 2), run:
+   ```
+   ollama pull llama2
+   ```
+   You can find more models at [https://ollama.com/library](https://ollama.com/library).
+
+4. **Run the application**  
+   Now you can run the sentiment analysis with the Ollama provider:
+   ```
+   python bitcoin_news_sentiment.py --provider ollama
+   ```
+
+**Note:**  
+If the Ollama server is not running, you will see connection errors such as `OllamaException - [Errno 61] Connection refused`.
 
 ### Default Locations:
 - Cache: `./data/article_cache.json`
 - Results: `./data/bitcoin_sentiment_results.csv` 
+
+## Command-Line Usage
+
+You can run the main script with various arguments to customize its behavior:
+
+```bash
+python bitcoin_news_sentiment.py [OPTIONS]
+```
+
+**Options:**
+
+- `--days N`  
+  Number of days to look back for news (default: 1).
+
+- `--week`  
+  Fetch articles from the previous week (overrides `--days`).
+
+- `--from-date YYYY-MM-DD`  
+  Start date for fetching articles (overrides `--days`/`--week`).
+
+- `--to-date YYYY-MM-DD`  
+  End date for fetching articles.
+
+- `--page-size N`  
+  Number of articles to fetch (default: 10, max: 100).
+
+- `--provider PROVIDER`  
+  LLM provider to use (`together_ai`, `openai`, `huggingface`, `gemini`, `ollama`).
+
+**Example:**
+
+```bash
+python bitcoin_news_sentiment.py --days 7 --page-size 50 --provider openai
+``` 

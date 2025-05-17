@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Any
 from dataclasses import dataclass
+import re
 
 import requests
 import pandas as pd
@@ -40,7 +41,7 @@ class Config:
     PROMPT_TEMPLATE: str = (
         "You are a financial sentiment analyst.\n"
         "Classify the sentiment of the following Bitcoin news article as one of "
-        "'Positive', 'Neutral', or 'Negative'. Respond with ONLY the full word (not abbreviated).\n\n"
+        "'Positive', 'Neutral', or 'Negative'. Respond with exactly one of: Positive, Neutral, Negative. No other words or punctuation.\n\n"
         "Article: {text}\n\nSentiment:"
     )
 
@@ -69,7 +70,7 @@ class Config:
                 "api_key": self.TOGETHER_API_KEY,
             },
             "openai": {
-                "model": "gpt-3.5-turbo",
+                "model": "openai/gpt-3.5-turbo",
                 "api_key": self.OPENAI_API_KEY,
             },
             "huggingface": {
@@ -79,7 +80,11 @@ class Config:
             "gemini": {
                 "model": "gemini-pro",
                 "api_key": self.GOOGLE_API_KEY,
-            }
+            },
+            "ollama": {
+                "model": "ollama/llama2",
+                "api_key": None,
+            },
         }
 
 
@@ -223,27 +228,55 @@ def process_news_articles(config: Config, page_size: int = 10, days_back: int = 
         # Check if the article is already in the cache
         if article_hash in cache:
             cached_data = cache[article_hash]
+            # Normalize cached sentiment
+            sentiment_lower = str(cached_data['sentiment']).lower()
+            if sentiment_lower in ['pos', 'positive']:
+                sentiment_norm = 'Pos'
+                score = 1
+            elif sentiment_lower in ['neg', 'negative']:
+                sentiment_norm = 'Neg'
+                score = -1
+            elif sentiment_lower in ['n', 'ne', 'neutral']:
+                sentiment_norm = 'N'
+                score = 0
+            else:
+                sentiment_norm = 'N'
+                score = 0
             rows.append({
                 'publishedAt': art.get('publishedAt'),
                 'headline': headline,
-                'sentiment': cached_data['sentiment'],
-                'score': cached_data['score'],
+                'sentiment': sentiment_norm,
+                'score': score,
                 'url': art.get('url'),
                 'cost': 0.0,  # No cost for cached results
                 'cached': True
             })
-            print(f"[CACHED] [{cached_data['sentiment']}] {headline[:80]}...")
+            print(f"[CACHED] [{sentiment_norm}] {headline[:80]}...")
             continue
         
         # Analyze sentiment for new articles
         sentiment, cost = classify_sentiment(content, config)
+        print(f"Raw sentiment from model: '{sentiment}' for headline: {headline[:80]}")
         total_cost += cost
-        score = 1 if sentiment.lower() == 'positive' else (-1 if sentiment.lower() == 'negative' else 0)
+        # Robust normalization
+        sentiment_lower = re.sub(r'[^a-z]', '', sentiment.lower())  # Remove non-letters
+        if sentiment_lower in ['pos', 'positive']:
+            score = 1
+            sentiment_norm = 'Pos'
+        elif sentiment_lower in ['neg', 'negative']:
+            score = -1
+            sentiment_norm = 'Neg'
+        elif sentiment_lower in ['n', 'ne', 'neutral']:
+            score = 0
+            sentiment_norm = 'N'
+        else:
+            score = 0
+            sentiment_norm = 'N'  # Default to Neutral
         
         # Add to cache
         cache[article_hash] = {
             'timestamp': datetime.now(timezone.utc).isoformat(),
-            'sentiment': sentiment,
+            'sentiment': sentiment_norm,
             'score': score
         }
         new_cache_entries += 1
@@ -251,13 +284,13 @@ def process_news_articles(config: Config, page_size: int = 10, days_back: int = 
         rows.append({
             'publishedAt': art.get('publishedAt'),
             'headline': headline,
-            'sentiment': sentiment,
+            'sentiment': sentiment_norm,
             'score': score,
             'url': art.get('url'),
             'cost': cost,
             'cached': False
         })
-        print(f"[NEW] [{sentiment}] {headline[:80]}...")
+        print(f"[NEW] [{sentiment_norm}] {headline[:80]}...")
 
     # Save the updated cache
     if new_cache_entries > 0:
@@ -270,6 +303,24 @@ def process_news_articles(config: Config, page_size: int = 10, days_back: int = 
         df['publishedAt'] = pd.to_datetime(df['publishedAt'])
         df = df.sort_values('publishedAt', ascending=False)
         df.reset_index(drop=True, inplace=True)
+        # Normalize sentiment labels in the DataFrame to 'Pos', 'Neg', 'Ne'
+        sentiment_map = {
+            'Pos': 'Pos',
+            'pos': 'Pos',
+            'Positive': 'Pos',
+            'positive': 'Pos',
+            'Neg': 'Neg',
+            'neg': 'Neg',
+            'Negative': 'Neg',
+            'negative': 'Neg',
+            'N': 'Ne',
+            'n': 'Ne',
+            'Ne': 'Ne',
+            'ne': 'Ne',
+            'Neutral': 'Ne',
+            'neutral': 'Ne'
+        }
+        df['sentiment'] = df['sentiment'].map(lambda x: sentiment_map.get(str(x).strip(), 'Ne'))
     
     cached_count = df['cached'].sum() if 'cached' in df.columns else 0
     print(f"Articles processed: {len(df)} (New: {len(df) - cached_count}, Cached: {cached_count})")
