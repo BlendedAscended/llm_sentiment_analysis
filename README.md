@@ -195,14 +195,9 @@ OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
 TOGETHER_API_KEY="YOUR_TOGETHER_API_KEY"
 GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
 HUGGINGFACE_API_KEY="YOUR_HUGGINGFACE_API_KEY"
+```
 
-
-## API Keys
-
-* **NewsAPI Key:** Obtain from [newsapi.org](https://newsapi.org). This is essential for fetching news articles.
-* **LLM Provider Keys:** Depending on the LLM you intend to use (OpenAI, Together AI, Google Gemini, HuggingFace), you'll need the corresponding API key.
-
-## LLM Provider Prerequisites
+### LLM Provider Prerequisites
 
 | Provider      | API Key Required | Setup Notes                     |
 |---------------|------------------|---------------------------------|
@@ -212,11 +207,7 @@ HUGGINGFACE_API_KEY="YOUR_HUGGINGFACE_API_KEY"
 | HuggingFace   | Yes              | HuggingFace API token.          |
 | Ollama        | No               | Local Ollama server must be running. |
 
-## Export to Sheets
-
-(Refer to `bitcoin_API.md` for more details)
-
-## Using Ollama (Local LLM)
+### Using Ollama (Local LLM)
 
 If you wish to use a locally run LLM via Ollama (which doesn't require an external API key):
 
@@ -226,12 +217,40 @@ If you wish to use a locally run LLM via Ollama (which doesn't require an extern
 
 When running the analysis script or notebook, ensure you select `ollama` as the provider.
 
+## How to Run
 
-## Usage
+### Using Docker
 
-The project can be used via Jupyter Notebooks for interactive analysis or through a Python script for automated tasks.
+After starting the Docker containers, you can run the Bitcoin news sentiment analysis script in two ways:
 
-### Jupyter Notebooks
+1. **Through Jupyter Notebook**:
+   - Open `bitcoin_news_sentiment.ipynb` in Jupyter
+   - Run the cells sequentially to execute the analysis
+
+2. **Through Terminal**:
+   - Open a new terminal
+   - Connect to the running container:
+   ```bash
+   docker exec -it data605_app_1 bash
+   ```
+   - Run the script:
+   ```bash
+   python bitcoin_news_sentiment.py
+   ```
+
+   Additional command-line options:
+   ```bash
+   # Analyze news from the last 5 days
+   python bitcoin_news_sentiment.py --days 5
+
+   # Use Ollama as the LLM provider
+   python bitcoin_news_sentiment.py --provider ollama
+
+   # Run continuous analysis every 30 minutes
+   python bitcoin_news_sentiment.py --loop --interval 30
+   ```
+
+### Using Jupyter Notebooks
 
 * **`bitcoin_news_sentiment.ipynb`**:
     * Ideal for a first look at the project's capabilities.
