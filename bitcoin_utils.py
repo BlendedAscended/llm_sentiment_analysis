@@ -34,15 +34,16 @@ class Config:
     HUGGINGFACE_API_KEY: Optional[str]
     PROVIDER: str = "together_ai"
     MODEL_ID: str = "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    MAX_TOKENS: int = 1000
+    MAX_TOKENS: int = 10000
     DATA_DIR: Path = Path.cwd() / "data"
     CSV_PATH: Path = DATA_DIR / "bitcoin_news_sentiment.csv"
     CACHE_PATH: Path = DATA_DIR / "article_cache.json"
     PROMPT_TEMPLATE: str = (
         "You are a financial sentiment analyst.\n"
-        "Classify the sentiment of the following Bitcoin news article as one of "
-        "'Positive', 'Neutral', or 'Negative'. Respond with exactly one of: Positive, Neutral, Negative. No other words or punctuation.\n\n"
-        "Article: {text}\n\nSentiment:"
+    "Classify the sentiment of the following Bitcoin news article as exactly one of these three words: Positive, Neutral, Negative.\n"
+    "Respond with ONLY one of these three words. Do not include any other words, punctuation, or explanation.\n\n"
+    "Article: {text}\n\n"
+    "Sentiment:"
     )
 
     @classmethod
@@ -344,84 +345,3 @@ def create_sentiment_pie_chart(df: pd.DataFrame) -> go.Figure:
     )
 
 
-# Notebook generation functionality (not currently used)
-# -----------------------------------------------------
-# def create_notebook_cells() -> List[Any]:
-#     """Create cells for the Jupyter notebook."""
-#     return [
-#         new_markdown_cell(
-#             "# Bitcoin News Sentiment Analysis (LiteLLM, Modular, Table Display)\n"
-#             "\n"
-#             "This notebook fetches the latest Bitcoin news, analyzes sentiment using an LLM (via LiteLLM), and displays the results in a table.\n"
-#             "\n"
-#             "**Instructions:**\n"
-#             "- Make sure you have a `.env` file with your API keys (NEWS_API_KEY, OPENAI_API_KEY, etc).\n"
-#             "- Run the setup cell below to install dependencies.\n"
-#             "- You can change the LLM provider in the configuration cell."
-#         ),
-#         new_code_cell(
-#             "!pip install -q litellm requests python-dotenv pandas tiktoken ipywidgets plotly"
-#         ),
-#         new_markdown_cell("## Imports and Configuration"),
-#         new_code_cell(
-#             "import os\n"
-#             "import json\n"
-#             "import hashlib\n"
-#             "from datetime import datetime, timezone\n"
-#             "from pathlib import Path\n"
-#             "from typing import List, Dict, Optional, Tuple\n"
-#             "from dataclasses import dataclass\n"
-#             "\n"
-#             "import requests\n"
-#             "import pandas as pd\n"
-#             "from dotenv import load_dotenv\n"
-#             "import tiktoken\n"
-#             "from litellm import completion\n"
-#             "\n"
-#             "# For table display\n"
-#             "from IPython.display import display, HTML\n"
-#             "import ipywidgets as widgets\n"
-#             "\n"
-#             "# For optional visualization\n"
-#             "import plotly.express as px\n"
-#             "\n"
-#             "# Import our utility functions\n"
-#             "from bitcoin_utils import (\n"
-#             "    Config, fetch_bitcoin_news, classify_sentiment,\n"
-#             "    process_news_articles, make_clickable, create_sentiment_pie_chart\n"
-#             ")"
-#         ),
-#         new_markdown_cell("### Create Config class with classmethod"),
-#         new_code_cell(
-#             "# Load configuration\n"
-#             "config = Config.load()"
-#         ),
-#         new_markdown_cell("## Run Sentiment Analysis on Latest News"),
-#         new_code_cell(
-#             "# Process news articles and get results\n"
-#             "df = process_news_articles(config, page_size=10)\n"
-#             "df.head()"
-#         ),
-#         new_markdown_cell("## Display Results as Interactive Table"),
-#         new_code_cell(
-#             "# Display interactive table with clickable links\n"
-#             "display(HTML(df.to_html(escape=False, formatters={'url': make_clickable}, index=False)))"
-#         ),
-#         new_markdown_cell("## Optional: Visualize Sentiment Distribution"),
-#         new_code_cell(
-#             "# Create and display sentiment distribution pie chart\n"
-#             "fig = create_sentiment_pie_chart(df)\n"
-#             "fig.show()"
-#         ),
-#     ]
-
-
-# def generate_notebook(output_path: str = "bitcoin_news_sentiment.ipynb") -> None:
-#     """Generate a Jupyter notebook for Bitcoin news sentiment analysis."""
-#     nb = new_notebook()
-#     nb.cells = create_notebook_cells()
-#     
-#     with open(output_path, "w") as f:
-#         nbf.write(nb, f)
-#     
-#     print(f"Notebook created: {output_path}")
