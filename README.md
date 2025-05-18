@@ -273,14 +273,13 @@ To use the notebooks:
 The `bitcoin_news_sentiment.py` script allows for running the sentiment analysis pipeline from the terminal.
 
 **Basic Execution:**
-
 ```bash
 python bitcoin_news_sentiment.py
-
+```
 
 This command will fetch Bitcoin news for the past day using the default LLM provider and save the results.
 
-## Available Arguments:
+**Available Arguments:**
 
 * `--days DAYS`: Specify the number of past days to fetch news from (default: 1).
 * `--week`: A shortcut to fetch news from the last 7 days (overrides `--days`).
@@ -291,16 +290,17 @@ This command will fetch Bitcoin news for the past day using the default LLM prov
 * `--loop`: Enable continuous analysis, running at scheduled intervals.
 * `--interval MINUTES`: Set the interval in minutes for the `--loop` mode (default: 60).
 
-## Example Commands:
+**Example Commands:**
 
 Analyze news from the last 5 days for Bitcoin, fetching 25 articles, using OpenAI:
 ```bash
 python bitcoin_news_sentiment.py --days 5 --page-size 25 --provider openai
+```
 
 Run analysis continuously every 30 minutes using a local Ollama instance:
-
 ```bash
 python bitcoin_news_sentiment.py --provider ollama --loop --interval 30
+```
 
 *(Note: For analyzing cryptocurrencies other than Bitcoin via the script, you might need to directly modify the default query term in the `Workspace_bitcoin_news` function within `bitcoin_utils.py`, or extend the script to accept a query argument. The notebooks provide clearer examples of this customization.)*
 
